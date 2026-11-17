@@ -52,8 +52,9 @@
   }
   button.primary { background: var(--accent); color: var(--accent-text); }
   .error { color: var(--err); font-weight: 600; margin-top: 10px; min-height: 1.5em; }
-  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-  @media (max-width: 700px) { .grid { grid-template-columns: 1fr; } }
+  .grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; }
+  @media (max-width: 700px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+  .card { min-width: 0; }
   .time { font-size: 1.6rem; font-weight: 700; direction: ltr; text-align: right; }
   .list {
     direction: ltr; text-align: left; font-family: Consolas, monospace;
