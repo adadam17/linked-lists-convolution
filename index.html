@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>בניית L3 מרשימות מקושרות</title>
+<style>
+  :root {
+    --bg: #f6f7f9; --card: #ffffff; --text: #1d2430; --muted: #5d6778;
+    --border: #d9dee6; --accent: #2f6fdb; --accent-text: #ffffff;
+    --ok: #1f8a4c; --err: #c0392b; --code-bg: #eef1f5;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #14171c; --card: #1d2128; --text: #e6e9ee; --muted: #9aa3b2;
+      --border: #333a45; --accent: #5b8ff0; --accent-text: #0d1117;
+      --ok: #4cc27f; --err: #ef6b5b; --code-bg: #262b33;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #14171c; --card: #1d2128; --text: #e6e9ee; --muted: #9aa3b2;
+    --border: #333a45; --accent: #5b8ff0; --accent-text: #0d1117;
+    --ok: #4cc27f; --err: #ef6b5b; --code-bg: #262b33;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: "Segoe UI", Arial, sans-serif; line-height: 1.5;
+  }
+  main { max-width: 900px; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { font-size: 1.5rem; margin: 0 0 4px; }
+  .sub { color: var(--muted); margin: 0 0 20px; }
+  .card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 16px; margin-bottom: 16px;
+  }
+  .card h2 { font-size: 1.1rem; margin: 0 0 8px; }
+  .formula { font-size: 1.1rem; direction: ltr; text-align: center; margin: 8px 0; }
+  label { display: block; font-weight: 600; margin: 10px 0 4px; }
+  .hint { color: var(--muted); font-size: 0.85rem; font-weight: 400; }
+  textarea, input[type=number] {
+    width: 100%; font: inherit; direction: ltr; text-align: left;
+    padding: 8px; border: 1px solid var(--border); border-radius: 6px;
+    background: var(--bg); color: var(--text);
+  }
+  textarea { min-height: 54px; resize: vertical; }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: end; margin-top: 12px; }
+  .row .n { width: 120px; }
+  button {
+    font: inherit; padding: 8px 16px; border-radius: 6px; cursor: pointer;
+    border: 1px solid var(--accent); background: transparent; color: var(--accent);
+  }
+  button.primary { background: var(--accent); color: var(--accent-text); }
+  .error { color: var(--err); font-weight: 600; margin-top: 10px; min-height: 1.5em; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 700px) { .grid { grid-template-columns: 1fr; } }
+  .time { font-size: 1.6rem; font-weight: 700; direction: ltr; text-align: right; }
+  .list {
+    direction: ltr; text-align: left; font-family: Consolas, monospace;
+    background: var(--code-bg); border-radius: 6px; padding: 8px;
+    overflow-x: auto; white-space: nowrap; font-size: 0.9rem;
+  }
+  .check { margin-top: 8px; font-weight: 600; }
+  .check.ok { color: var(--ok); }
+  .check.bad { color: var(--err); }
+  pre {
+    direction: ltr; text-align: left; background: var(--code-bg);
+    border-radius: 6px; padding: 10px; overflow-x: auto; font-size: 0.85rem;
+  }
+  .idea { color: var(--muted); font-size: 0.95rem; }
+</style>
+</head>
+<body>
+<main>
+  <h1>בניית רשימה L3 משתי רשימות מקושרות</h1>
+  <p class="sub">מבני נתונים א (150015), תרגיל 2, שאלה 1</p>
+
+  <div class="card">
+    <h2>הבעיה</h2>
+    <div class="formula">c<sub>k</sub> = a<sub>1</sub>·b<sub>k</sub> + a<sub>2</sub>·b<sub>k−1</sub> + … + a<sub>k</sub>·b<sub>1</sub> ,&nbsp; k = 1, …, n</div>
+    <label for="l1">L1 = a<sub>1</sub>, …, a<sub>n</sub> <span class="hint">(מספרים טבעיים, מופרדים בפסיקים או ברווחים)</span></label>
+    <textarea id="l1">1, 2, 3</textarea>
+    <label for="l2">L2 = b<sub>1</sub>, …, b<sub>n</sub></label>
+    <textarea id="l2">4, 5, 6</textarea>
+    <div class="row">
+      <button class="primary" id="run">חשב את L3</button>
+      <div class="n">
+        <label for="n">n אקראי</label>
+        <input type="number" id="n" value="2000" min="1" max="20000">
+      </div>
+      <button id="rand">צור רשימות אקראיות</button>
+    </div>
+    <div class="error" id="error"></div>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <h2>גרסה א: רשימות חד-כיווניות</h2>
+      <div>זמן ריצה:</div>
+      <div class="time" id="timeA">–</div>
+      <label>L3</label>
+      <div class="list" id="listA">–</div>
+    </div>
+    <div class="card">
+      <h2>גרסה ב: רשימות דו-כיווניות</h2>
+      <div>זמן ריצה:</div>
+      <div class="time" id="timeB">–</div>
+      <label>L3</label>
+      <div class="list" id="listB">–</div>
+    </div>
+  </div>
+  <div class="card">
+    <h2>בדיקה</h2>
+    <div class="check" id="check">–</div>
+  </div>
+
+  <div class="card">
+    <h2>גרסה א: הרעיון</h2>
+    <p class="idea">אסור להפוך את הרשימות, ובחד-כיוונית אי אפשר ללכת אחורה. לכן מחשבים כל c<sub>k</sub> בהדרגה:
+      המכפלה a<sub>i</sub>·b<sub>j</sub> נכנסת ל-c<sub>i+j−1</sub>. עבור כל a<sub>i</sub> עוברים על L2 מההתחלה,
+      ובמקביל על L3 החל מ-c<sub>i</sub>. כל המצביעים מתקדמים רק קדימה. עוצרים כשמגיעים לסוף L3.
+      מספר המכפלות: n + (n−1) + … + 1 = n(n+1)/2, כלומר זמן ריצה Θ(n²).</p>
+<pre>ConvolutionSingly(L1, L2)
+    L3 = new list of n nodes with key 0
+    pa = head(L1)
+    startC = head(L3)              // c_i : where a_i * b_1 goes
+    while pa != NULL
+        pb = head(L2)
+        pc = startC
+        while pc != NULL           // stop after c_n
+            key(pc) = key(pc) + key(pa) * key(pb)
+            pb = next(pb)
+            pc = next(pc)
+        pa = next(pa)
+        startC = next(startC)      // a_(i+1) starts one node later
+    return L3</pre>
+  </div>
+
+  <div class="card">
+    <h2>גרסה ב: הרעיון</h2>
+    <p class="idea">לכל צומת יש גם מצביע prev, ולכן אפשר לחשב כל c<sub>k</sub> ישירות לפי הנוסחה:
+      מצביע על L1 מתקדם מ-a<sub>1</sub>, ומצביע על L2 חוזר אחורה מ-b<sub>k</sub>.
+      מחזיקים מצביע ל-b<sub>k</sub>, שמתקדם צעד אחד בין k ל-k+1, כך שלא מחפשים אותו מחדש.
+      זמן ריצה Θ(n²).</p>
+<pre>ConvolutionDoubly(L1, L2)
+    L3 = empty list
+    bk = head(L2)                  // b_k for k = 1
+    while bk != NULL
+        sum = 0
+        pa = head(L1)
+        pb = bk
+        while pb != NULL           // from b_k back to b_1
+            sum = sum + key(pa) * key(pb)
+            pa = next(pa)
+            pb = prev(pb)
+        append a node with key sum at the end of L3
+        bk = next(bk)
+    return L3</pre>
+  </div>
+</main>
+
+<script>
+// ---------- Singly linked list (version A) ----------
+class SNode {
+  constructor(key) { this.key = key; this.next = null; }
+}
+function buildSingly(arr) {
+  let head = null, tail = null;
+  for (const x of arr) {
+    const node = new SNode(x);
+    if (head === null) head = node; else tail.next = node;
+    tail = node;
+  }
+  return head;
+}
+// Builds L3 directly from L1 and L2, without reversing them.
+// The product a_i * b_j is added to c_(i+j-1).
+function convolutionSingly(head1, head2) {
+  let head3 = null, tail3 = null;
+  for (let p = head1; p !== null; p = p.next) {   // n nodes with key 0
+    const node = new SNode(0);
+    if (head3 === null) head3 = node; else tail3.next = node;
+    tail3 = node;
+  }
+  let pa = head1;
+  let startC = head3;                 // c_i
+  while (pa !== null) {
+    let pb = head2;                   // b_1
+    let pc = startC;                  // c_i
+    while (pc !== null) {             // stop after c_n
+      pc.key += pa.key * pb.key;
+      pb = pb.next;
+      pc = pc.next;
+    }
+    pa = pa.next;
+    startC = startC.next;
+  }
+  return head3;
+}
+
+// ---------- Doubly linked list (version B) ----------
+class DNode {
+  constructor(key) { this.key = key; this.next = null; this.prev = null; }
+}
+class DList {
+  constructor() { this.head = null; this.tail = null; }
+  append(key) {
+    const node = new DNode(key);
+    if (this.head === null) { this.head = node; }
+    else { this.tail.next = node; node.prev = this.tail; }
+    this.tail = node;
+  }
+}
+function buildDoubly(arr) {
+  const list = new DList();
+  for (const x of arr) list.append(x);
+  return list;
+}
+// c_k computed directly: a pointer goes forward on L1 from a_1,
+// another goes backward on L2 from b_k.
+function convolutionDoubly(L1, L2) {
+  const L3 = new DList();
+  let bk = L2.head;                   // b_k for k = 1
+  while (bk !== null) {
+    let sum = 0;
+    let pa = L1.head;
+    let pb = bk;
+    while (pb !== null) {             // from b_k back to b_1
+      sum += pa.key * pb.key;
+      pa = pa.next;
+      pb = pb.prev;
+    }
+    L3.append(sum);
+    bk = bk.next;
+  }
+  return L3;
+}
+
+// ---------- Display and checks ----------
+function toArray(head) {
+  const out = [];
+  for (let p = head; p !== null; p = p.next) out.push(p.key);
+  return out;
+}
+function showList(values, doubly) {
+  const n = values.length;
+  const box = v => "[" + v + "]";
+  const link = doubly ? " ⇄ " : " → ";
+  let shown;
+  if (n <= 12) shown = values.map(box).join(link);
+  else shown = values.slice(0, 6).map(box).join(link) + link + " … " + link +
+               values.slice(n - 3).map(box).join(link);
+  return (doubly ? "NULL ← " : "") + shown + " → NULL" + (n > 12 ? "   (n = " + n + ")" : "");
+}
+// Direct check of the formula with arrays (not part of the algorithm).
+function directFormula(a, b) {
+  const n = a.length, c = [];
+  for (let k = 1; k <= n; k++) {
+    let s = 0;
+    for (let i = 1; i <= k; i++) s += a[i - 1] * b[k - i];
+    c.push(s);
+  }
+  return c;
+}
+function parse(text) {
+  const parts = text.split(/[\s,;]+/).filter(s => s.length > 0);
+  for (const p of parts) if (!/^\d+$/.test(p)) return null;
+  return parts.map(Number);
+}
+function fmt(ms) { return ms.toFixed(3) + " ms"; }
+
+const $ = id => document.getElementById(id);
+
+function run() {
+  $("error").textContent = "";
+  const a = parse($("l1").value), b = parse($("l2").value);
+  if (a === null || b === null) { $("error").textContent = "יש להזין מספרים טבעיים בלבד."; return; }
+  if (a.length === 0) { $("error").textContent = "הרשימות ריקות."; return; }
+  if (a.length !== b.length) {
+    $("error").textContent = "לשתי הרשימות צריך להיות אותו מספר צמתים n (כרגע " + a.length + " ו-" + b.length + ").";
+    return;
+  }
+
+  // Version A: only the construction of L3 is timed.
+  const s1 = buildSingly(a), s2 = buildSingly(b);
+  let t0 = performance.now();
+  const s3 = convolutionSingly(s1, s2);
+  let t1 = performance.now();
+  const resA = toArray(s3);
+  $("timeA").textContent = fmt(t1 - t0);
+  $("listA").textContent = showList(resA, false);
+
+  // Version B
+  const d1 = buildDoubly(a), d2 = buildDoubly(b);
+  t0 = performance.now();
+  const d3 = convolutionDoubly(d1, d2);
+  t1 = performance.now();
+  const resB = toArray(d3.head);
+  $("timeB").textContent = fmt(t1 - t0);
+  $("listB").textContent = showList(resB, true);
+
+  // Check
+  const expected = directFormula(a, b);
+  const same = (x, y) => x.length === y.length && x.every((v, i) => v === y[i]);
+  const ok = same(resA, expected) && same(resB, expected);
+  const unsafe = expected.some(v => !Number.isSafeInteger(v));
+  const el = $("check");
+  el.className = "check " + (ok ? "ok" : "bad");
+  el.textContent = ok
+    ? "✓ שתי הגרסאות נותנות אותה תוצאה כמו חישוב ישיר לפי הנוסחה."
+    : "✗ יש הבדל בין התוצאות.";
+  if (unsafe) el.textContent += " (שימו לב: מספרים גדולים מדי, ייתכן אובדן דיוק)";
+}
+
+function randomLists() {
+  let n = parseInt($("n").value, 10);
+  if (!(n >= 1)) n = 1;
+  if (n > 20000) { n = 20000; $("n").value = 20000; }
+  const r = () => Array.from({ length: n }, () => 1 + Math.floor(Math.random() * 100));
+  $("l1").value = r().join(", ");
+  $("l2").value = r().join(", ");
+  run();
+}
+
+$("run").addEventListener("click", run);
+$("rand").addEventListener("click", randomLists);
+run();
+</script>
+</body>
+</html>
