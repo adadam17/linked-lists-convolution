@@ -324,7 +324,15 @@ function randomLists() {
 
 $("run").addEventListener("click", run);
 $("rand").addEventListener("click", randomLists);
-run();
+
+// Optional link parameter: ?n=2000 opens the page with random lists of size n.
+const nParam = new URLSearchParams(location.search).get("n");
+if (nParam !== null && /^\d+$/.test(nParam)) {
+  $("n").value = nParam;
+  randomLists();
+} else {
+  run();
+}
 </script>
 </body>
 </html>
